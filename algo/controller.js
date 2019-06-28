@@ -2,6 +2,8 @@ const config = require('../config');
 
 let minCost,vis,dist;
 
+let flag=0;
+
 let calculateCost = (req,res)=>{
 	dist = floydWarshall();
 	let w = new Array(3);
@@ -34,6 +36,7 @@ let calculateCost = (req,res)=>{
 		if(vis[i])
 			continue;
 		vis[i]=true;
+		// console.log(i);
 		findSequence(w,w[i],0,i);
 		vis[i] = false;
 	}
@@ -48,12 +51,13 @@ let findSequence = (w,tweight,tcost,j) =>{
 	let f=true;
 	for(let i=0;i<4;i++)
 	{
-		if(vis[i])
+		if(vis[i] || i==j)
 			continue;
 		let extraWeight = Math.max(0,tweight-config.limit);
 		let cost = dist[j][i]*(config.fixedRate+config.variableRate*Math.ceil(extraWeight/config.postLimit));
 		tcost += cost;
-		console.log(i+" "+extraWeight+" "+tweight);
+		if(tcost>minCost)
+			return;
 		if(i==3)
 		{
 			if(f)
@@ -62,10 +66,7 @@ let findSequence = (w,tweight,tcost,j) =>{
 					minCost = tcost;
 			}
 			else
-			{
-				tweight = 0;
-				findSequence(w,tweight,tcost,i);
-			}
+				findSequence(w,0,tcost,i);
 		}
 		else
 		{
@@ -73,6 +74,8 @@ let findSequence = (w,tweight,tcost,j) =>{
 			tweight += w[i];
 			vis[i] = true;
 			findSequence(w,tweight,tcost,i);
+			tweight -= w[i];
+			tcost -= cost;
 			vis[i] = false;
 		}
 	}
